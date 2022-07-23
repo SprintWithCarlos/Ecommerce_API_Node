@@ -28,21 +28,17 @@ router.put("/:id", verifyTokenAndAuthorization, async (req, res, next) => {
 });
 
 // Delete User
-router.delete(
-  "/delete/:id",
-  verifyTokenAndAuthorization,
-  async (req, res, next) => {
-    try {
-      const deleteUser = await User.findByIdAndDelete(req.params.id);
-      res.status(200).json("User Deleted: " + deleteUser);
-    } catch (error) {
-      res.status(500).json(error);
-    }
+router.delete("/:id", verifyTokenAndAuthorization, async (req, res, next) => {
+  try {
+    const deleteUser = await User.findByIdAndDelete(req.params.id);
+    res.status(200).json("User Deleted: " + deleteUser);
+  } catch (error) {
+    res.status(500).json(error);
   }
-);
+});
 
 // Get User (Admin)
-router.get("/get/:id", verifyTokenAndAdmin, async (req, res, next) => {
+router.get("/:id", verifyTokenAndAdmin, async (req, res, next) => {
   try {
     const getUser = await User.findById({ _id: req.params.id });
     res.status(200).json("Admin Get User: " + getUser);
@@ -77,6 +73,32 @@ router.get("/stats", verifyTokenAndAdmin, async (req, res, next) => {
     ]);
     res.status(200).json(data);
   } catch (error) {
+    res.status(500).json(error);
+  }
+});
+// Just for testing
+router.post("/createAdmin", async (req, res, next) => {
+  try {
+    const salt = await bcrypt.genSalt(10);
+    const hashPassword = await bcrypt.hash(req.body.password, salt);
+    const foundUser = await User.findOne({
+      email: req.body.email,
+      username: req.body.username,
+    });
+    if (foundUser) {
+      res.status(400).json({ message: "User already exists" });
+    }
+    const newUser = new User({
+      username: req.body.username,
+      email: req.body.email,
+      password: hashPassword,
+      isAdmin: true,
+    });
+
+    const userSaved = await newUser.save();
+    res.status(201).json(userSaved);
+  } catch (error) {
+    console.log(error);
     res.status(500).json(error);
   }
 });
